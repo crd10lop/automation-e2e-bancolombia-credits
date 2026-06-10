@@ -1,0 +1,62 @@
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        classpath("net.serenity-bdd:serenity-gradle-plugin:3.3.4")
+    }
+}
+
+plugins {
+    id 'java'
+}
+
+apply plugin: 'net.serenity-bdd.serenity-gradle-plugin'
+
+group = 'com.bancolombia'
+version = '1.0-SNAPSHOT'
+
+ext {
+    serenityVersion        = '3.9.8'
+    serenityCucumberVersion = '3.9.8'
+    serenityWebVersion     = '3.9.8'
+    junitVersion           = '4.13.2'
+    hamcrestVersion        = '2.2'
+    lombokVersion          = '1.18.30'
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation "net.serenity-bdd:serenity-core:${serenityVersion}"
+    implementation "net.serenity-bdd:serenity-junit:${serenityVersion}"
+    implementation "net.serenity-bdd:serenity-screenplay:${serenityVersion}"
+    implementation "net.serenity-bdd:serenity-cucumber:${serenityCucumberVersion}"
+    implementation 'org.slf4j:slf4j-simple:2.0.5'
+    implementation "net.serenity-bdd:serenity-screenplay-webdriver:${serenityWebVersion}"
+
+    // Compilacion de pruebas
+    testImplementation "junit:junit:${junitVersion}"
+    testImplementation "org.hamcrest:hamcrest-all:${hamcrestVersion}"
+    implementation 'org.slf4j:slf4j-simple:2.0.5'
+    testImplementation("io.github.bonigarcia:webdrivermanager:5.4.1")
+
+    // Dependencias Lombok
+    compileOnly "org.projectlombok:lombok:${lombokVersion}"
+    annotationProcessor "org.projectlombok:lombok:${lombokVersion}"
+    testCompileOnly "org.projectlombok:lombok:${lombokVersion}"
+
+    // Libreria adicional
+    implementation group: 'org.apache.commons', name: 'commons-dbcp2', version: '2.12.0'
+}
+
+test {
+    ignoreFailures = true
+}
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
+}
