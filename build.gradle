@@ -39,7 +39,7 @@ dependencies {
 
     // Compilacion de pruebas
     testImplementation "junit:junit:${junitVersion}"
-    testImplementation "org.hamcrest:hamcrest-all:${hamcrestVersion}"
+    testImplementation "org.hamcrest:hamcrest:${hamcrestVersion}"
     implementation 'org.slf4j:slf4j-simple:2.0.5'
     testImplementation("io.github.bonigarcia:webdrivermanager:5.4.1")
 
