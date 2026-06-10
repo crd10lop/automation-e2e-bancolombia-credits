@@ -1,6 +1,32 @@
 CLAUDE.md
-# Ignore Gradle project-specific cache directory
+
+# Directorio de cache de Gradle
 .gradle
 
-# Ignore Gradle build output directory
+# Salida de compilacion de Gradle
 build
+
+# Clases compiladas por el IDE (Eclipse/IntelliJ)
+bin
+
+# Reportes y evidencias de Serenity (se regeneran en cada ejecucion)
+target
+
+# Archivos compilados de Java
+*.class
+
+# Logs
+*.log
+
+# Configuracion de IDEs
+.idea
+*.iml
+*.ipr
+*.iws
+.project
+.classpath
+.settings
+
+# Archivos del sistema operativo
+.DS_Store
+Thumbs.db

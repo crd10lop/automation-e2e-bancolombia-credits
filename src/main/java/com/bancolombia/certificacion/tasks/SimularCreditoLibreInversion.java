@@ -1,7 +1,10 @@
 package com.bancolombia.certificacion.tasks;
 
+import com.bancolombia.certificacion.interactions.CerrarModalesIniciales;
+import com.bancolombia.certificacion.interactions.EsperarBotonHabilitado;
 import com.bancolombia.certificacion.interactions.EsperarElemento;
 import com.bancolombia.certificacion.interactions.PausaVisible;
+import com.bancolombia.certificacion.interactions.SeleccionarFechaCalendario;
 import com.bancolombia.certificacion.models.DatosSimulacion;
 import com.bancolombia.certificacion.userinterfaces.SimuladorLibreInversionUI;
 import net.serenitybdd.screenplay.Actor;
@@ -13,9 +16,10 @@ import net.serenitybdd.screenplay.actions.JavaScriptClick;
 import static net.serenitybdd.screenplay.Tasks.instrumented;
 
 // Tarea de negocio: simular un credito de libre inversion en el portal de Bancolombia.
-// Encapsula el flujo completo desde la pantalla de bienvenida hasta el ingreso de datos,
-// siguiendo el orden que el banco impone: continuar -> confirmar monto -> ingresar valores.
-// Esta tarea recibe el modelo con los datos para no depender de parametros sueltos.
+// Reproduce el camino completo del usuario: cerrar los avisos iniciales, entrar al
+// formulario desde la pantalla de bienvenida, confirmar que conoce el monto y diligenciar
+// monto, plazo y fecha de nacimiento. Recibe los datos en un modelo para mantener
+// las capas desacopladas.
 public class SimularCreditoLibreInversion implements Task {
 
     private final DatosSimulacion datos;
@@ -31,39 +35,53 @@ public class SimularCreditoLibreInversion implements Task {
     @Override
     public <T extends Actor> void performAs(T actor) {
 
-        // El banco muestra una pantalla introductoria con las condiciones del credito.
-        // El usuario debe hacer clic en continuar para acceder al formulario de simulacion.
+        // Cerramos cookies y consentimiento, que de lo contrario tapan la pantalla.
+        actor.attemptsTo(
+            CerrarModalesIniciales.siAparecen()
+        );
+
+        // Entramos al formulario desde la pantalla de bienvenida del credito.
         actor.attemptsTo(
             EsperarElemento.seaVisible(SimuladorLibreInversionUI.BOTON_CONTINUAR),
             PausaVisible.estandar(),
             Click.on(SimuladorLibreInversionUI.BOTON_CONTINUAR)
         );
 
-        // El banco pregunta si el usuario ya sabe el monto que necesita.
-        // Seleccionar "Si" activa el campo de ingreso de monto en el formulario.
+        // Tras avanzar puede reaparecer algun aviso, asi que volvemos a cerrarlos.
         actor.attemptsTo(
-            EsperarElemento.seaVisible(SimuladorLibreInversionUI.OPCION_SI_MONTO),
+            CerrarModalesIniciales.siAparecen()
+        );
+
+        // Confirmamos que el usuario ya sabe el monto. La opcion es un radio que el
+        // banco oculta visualmente y reemplaza por una etiqueta, por eso no esperamos
+        // a que sea "visible" sino que lo marcamos directamente por javascript.
+        actor.attemptsTo(
             PausaVisible.estandar(),
             JavaScriptClick.on(SimuladorLibreInversionUI.OPCION_SI_MONTO)
         );
 
-        // Se ingresa el valor del credito que el usuario desea solicitar.
-        // El campo usa mascara de formato Angular, por eso se limpia antes de escribir.
+        // Ingresamos el valor del credito y el plazo en meses que se desea simular.
         actor.attemptsTo(
             EsperarElemento.seaVisible(SimuladorLibreInversionUI.CAMPO_MONTO),
             PausaVisible.estandar(),
-            Click.on(SimuladorLibreInversionUI.CAMPO_MONTO),
-            Enter.theValue(datos.getMonto()).into(SimuladorLibreInversionUI.CAMPO_MONTO)
+            Enter.theValue(datos.getMonto()).into(SimuladorLibreInversionUI.CAMPO_MONTO),
+            PausaVisible.estandar(),
+            Enter.theValue(datos.getPlazo()).into(SimuladorLibreInversionUI.CAMPO_PLAZO)
         );
 
-        // Se selecciona el plazo en meses para el que se desea calcular la cuota.
+        // Elegimos la fecha de nacimiento con el calendario del banco, que es
+        // obligatoria para que el simulador habilite el calculo de la cuota.
+        actor.attemptsTo(
+            SeleccionarFechaCalendario.en(
+                SimuladorLibreInversionUI.CAMPO_FECHA_NACIMIENTO,
+                datos.getFechaNacimiento()
+            )
+        );
+
+        // Esperamos a que el banco habilite el boton y disparamos la simulacion.
         actor.attemptsTo(
             PausaVisible.estandar(),
-            Click.on(SimuladorLibreInversionUI.SELECTOR_PLAZO)
-        );
-
-        // Se dispara el calculo de la cuota estimada.
-        actor.attemptsTo(
+            EsperarBotonHabilitado.elBoton(SimuladorLibreInversionUI.BOTON_SIMULAR),
             PausaVisible.estandar(),
             Click.on(SimuladorLibreInversionUI.BOTON_SIMULAR)
         );

@@ -54,6 +54,8 @@ dependencies {
 
 test {
     ignoreFailures = true
+    // Permite filtrar por nombre de escenario al ejecutar, util para depurar un solo flujo.
+    systemProperty "cucumber.filter.name", System.getProperty("cucumber.filter.name", "")
 }
 
 java {

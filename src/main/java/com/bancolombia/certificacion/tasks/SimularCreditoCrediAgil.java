@@ -1,21 +1,23 @@
 package com.bancolombia.certificacion.tasks;
 
+import com.bancolombia.certificacion.interactions.CerrarModalesIniciales;
+import com.bancolombia.certificacion.interactions.EsperarBotonHabilitado;
 import com.bancolombia.certificacion.interactions.EsperarElemento;
 import com.bancolombia.certificacion.interactions.PausaVisible;
+import com.bancolombia.certificacion.interactions.SeleccionarFechaCalendario;
 import com.bancolombia.certificacion.models.DatosSimulacion;
 import com.bancolombia.certificacion.userinterfaces.SimuladorCrediAgilUI;
 import net.serenitybdd.screenplay.Actor;
 import net.serenitybdd.screenplay.Task;
 import net.serenitybdd.screenplay.actions.Click;
 import net.serenitybdd.screenplay.actions.Enter;
-import net.serenitybdd.screenplay.actions.JavaScriptClick;
 
 import static net.serenitybdd.screenplay.Tasks.instrumented;
 
-// Tarea de negocio: simular un credito Crediagil en el portal de Bancolombia.
-// Crediagil es un cupo rotativo: se solicita una vez y se usa cuando se necesite.
-// Su flujo de simulacion es identico al de libre inversion pero aplica
-// restricciones distintas: ingresos minimos de 2.847.000 pesos y plazos de hasta 60 meses.
+// Tarea de negocio: simular el cupo rotativo Crediagil en el portal de Bancolombia.
+// Por ser un cupo rotativo, el formulario es corto: solo pide el monto que se quiere
+// solicitar y la fecha de nacimiento del cliente, sin plazo. Se entra al formulario
+// desde la pantalla de bienvenida y la fecha se elige con el calendario del banco.
 public class SimularCreditoCrediAgil implements Task {
 
     private final DatosSimulacion datos;
@@ -31,36 +33,42 @@ public class SimularCreditoCrediAgil implements Task {
     @Override
     public <T extends Actor> void performAs(T actor) {
 
-        // Pantalla introductoria del simulador de Crediagil con condiciones del producto.
+        // Cerramos cookies y consentimiento antes de empezar.
+        actor.attemptsTo(
+            CerrarModalesIniciales.siAparecen()
+        );
+
+        // Entramos al formulario desde la pantalla de bienvenida del cupo rotativo.
         actor.attemptsTo(
             EsperarElemento.seaVisible(SimuladorCrediAgilUI.BOTON_CONTINUAR),
             PausaVisible.estandar(),
             Click.on(SimuladorCrediAgilUI.BOTON_CONTINUAR)
         );
 
-        // El usuario confirma que conoce el monto del cupo que desea simular.
+        // Pueden reaparecer avisos al avanzar, asi que volvemos a cerrarlos.
         actor.attemptsTo(
-            EsperarElemento.seaVisible(SimuladorCrediAgilUI.OPCION_SI_MONTO),
-            PausaVisible.estandar(),
-            JavaScriptClick.on(SimuladorCrediAgilUI.OPCION_SI_MONTO)
+            CerrarModalesIniciales.siAparecen()
         );
 
-        // Se ingresa el valor del cupo rotativo que el usuario desea solicitar.
+        // Ingresamos el monto del cupo que el cliente desea solicitar.
         actor.attemptsTo(
             EsperarElemento.seaVisible(SimuladorCrediAgilUI.CAMPO_MONTO),
             PausaVisible.estandar(),
-            Click.on(SimuladorCrediAgilUI.CAMPO_MONTO),
             Enter.theValue(datos.getMonto()).into(SimuladorCrediAgilUI.CAMPO_MONTO)
         );
 
-        // Se selecciona el plazo para el calculo de la cuota del cupo rotativo.
+        // Elegimos la fecha de nacimiento con el calendario del banco.
         actor.attemptsTo(
-            PausaVisible.estandar(),
-            Click.on(SimuladorCrediAgilUI.SELECTOR_PLAZO)
+            SeleccionarFechaCalendario.en(
+                SimuladorCrediAgilUI.CAMPO_FECHA_NACIMIENTO,
+                datos.getFechaNacimiento()
+            )
         );
 
-        // Se dispara el calculo de la cuota estimada del Crediagil.
+        // Esperamos a que el banco habilite el boton y disparamos la simulacion del cupo.
         actor.attemptsTo(
+            PausaVisible.estandar(),
+            EsperarBotonHabilitado.elBoton(SimuladorCrediAgilUI.BOTON_SIMULAR),
             PausaVisible.estandar(),
             Click.on(SimuladorCrediAgilUI.BOTON_SIMULAR)
         );

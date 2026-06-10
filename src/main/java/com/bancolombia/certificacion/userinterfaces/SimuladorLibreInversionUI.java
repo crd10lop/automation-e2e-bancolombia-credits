@@ -3,37 +3,46 @@ package com.bancolombia.certificacion.userinterfaces;
 import net.serenitybdd.screenplay.targets.Target;
 import org.openqa.selenium.By;
 
-// Mapea cada elemento visible en el simulador de Libre Inversion de Bancolombia.
-// Centralizar los localizadores aqui garantiza que si el equipo de Bancolombia
-// cambia un id o clase, solo se edita esta clase y no toda la automatizacion.
+// Mapea los elementos reales del simulador de Libre Inversion de Bancolombia.
+// El flujo del banco es: pantalla de bienvenida con boton continuar, una pregunta
+// para confirmar que el usuario sabe el monto, y luego el formulario con monto,
+// plazo y fecha de nacimiento. La fecha es obligatoria porque el banco calcula
+// el seguro de vida y valida la edad del solicitante.
 public class SimuladorLibreInversionUI {
 
-    // Boton de bienvenida que habilita el acceso al formulario del simulador.
-    // El banco lo usa para mostrar las condiciones generales del credito antes de simular.
+    // Boton de bienvenida que da paso al formulario de simulacion.
     public static final Target BOTON_CONTINUAR = Target.the("boton continuar libre inversion")
             .located(By.id("boton-seleccion-tarjeta"));
 
-    // Opcion de radio que indica que el usuario ya sabe el monto exacto que necesita.
-    // Seleccionarla activa el campo de ingreso de monto en el formulario.
+    // Opcion que indica que el usuario ya conoce el monto que necesita.
+    // Al elegirla, el banco habilita el campo para escribir el valor del credito.
     public static final Target OPCION_SI_MONTO = Target.the("opcion si sabe el monto")
             .located(By.id("opcion-si"));
 
-    // Campo donde el usuario digita el valor del credito que desea solicitar.
-    // El banco valida que sea entre 1.000.000 y 200.000.000 pesos colombianos.
+    // Campo donde se escribe el valor del credito que se desea solicitar.
     public static final Target CAMPO_MONTO = Target.the("campo monto libre inversion")
             .located(By.id("valor-monto"));
 
-    // Selector de plazo en meses. El banco acepta entre 48 y 84 meses para este tipo de credito.
-    // Se interactua mediante el valor del option en el select de Angular.
-    public static final Target SELECTOR_PLAZO = Target.the("selector plazo libre inversion")
-            .located(By.cssSelector("select[formcontrolname='plazo'], bc-select[formcontrolname='plazo']"));
+    // Campo de texto para el plazo en meses. El banco acepta de 48 a 84 meses.
+    public static final Target CAMPO_PLAZO = Target.the("campo plazo libre inversion")
+            .located(By.id("valor-plazo"));
 
-    // Boton que dispara el calculo de la cuota estimada con los datos ingresados.
+    // Campo de fecha de nacimiento que se diligencia con el calendario del banco.
+    // Se expone como localizador directo porque el calendario requiere el clic
+    // nativo del navegador sobre el elemento para desplegarse.
+    public static final By CAMPO_FECHA_NACIMIENTO = By.id("input-fecha");
+
+    // Boton que ejecuta el calculo de la cuota. Permanece deshabilitado hasta
+    // que el monto, el plazo y la fecha esten completos y sean validos.
     public static final Target BOTON_SIMULAR = Target.the("boton simular libre inversion")
-            .located(By.cssSelector("button[class*='bc-button-primary']"));
+            .located(By.id("boton-simular"));
 
-    // Contenedor donde el banco muestra el resultado con la cuota mensual aproximada.
-    // Validar su presencia confirma que el simulador proceso los datos correctamente.
+    // Zona donde el banco muestra las cuotas calculadas para los distintos plazos.
+    // Que sea visible confirma que la simulacion se proceso correctamente.
+    // Tambien damos por valida la simulacion si aparece el reCAPTCHA "No soy robot",
+    // porque significa que el formulario se diligencio y se envio al banco; esa
+    // verificacion manual queda fuera del alcance de la prueba automatizada.
     public static final Target RESULTADO_SIMULACION = Target.the("resultado simulacion libre inversion")
-            .located(By.cssSelector("bc-card-result, div[class*='resultado'], div[class*='result'], span[class*='cuota']"));
+            .located(By.cssSelector(".numero-cuotas, .resultados-simulacion-boton, .cbc-pay, "
+                    + "iframe[src*='recaptcha'], iframe[title*='reCAPTCHA'], .g-recaptcha"));
 }

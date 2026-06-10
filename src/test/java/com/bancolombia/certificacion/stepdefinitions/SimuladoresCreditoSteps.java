@@ -9,6 +9,7 @@ import com.bancolombia.certificacion.userinterfaces.SimuladorCrediAgilUI;
 import com.bancolombia.certificacion.userinterfaces.SimuladorLibranzaUI;
 import com.bancolombia.certificacion.userinterfaces.SimuladorLibreInversionUI;
 import com.bancolombia.certificacion.utils.Constantes;
+import io.github.bonigarcia.wdm.WebDriverManager;
 import io.cucumber.java.Before;
 import io.cucumber.java.es.Cuando;
 import io.cucumber.java.es.Dado;
@@ -23,26 +24,23 @@ import static net.serenitybdd.screenplay.GivenWhenThen.seeThat;
 import static org.hamcrest.Matchers.is;
 
 // Puente entre los pasos escritos en Gherkin y las tareas del patron Screenplay.
-// Cada metodo hace una sola cosa: o delega a una tarea o evalua una pregunta.
-// La logica de automatizacion nunca vive aqui sino en Tasks, Interactions y Questions.
+// Cada metodo hace una sola cosa: abrir una pagina, delegar en una tarea o evaluar
+// una pregunta. La logica de automatizacion vive en Tasks, Interactions y Questions.
 public class SimuladoresCreditoSteps {
 
     @Managed
     private WebDriver navegador;
 
     // El actor representa al usuario que interactua con los simuladores del banco.
-    // Se inicializa una sola vez por escenario gracias a la anotacion @Before.
     private Actor usuarioBancolombia;
-
-    // El simulador de libranza recibe sus datos en varios pasos del feature.
-    // Guardamos monto, plazo y fecha aqui para construir el modelo cuando
-    // el usuario finalmente solicita simular el credito.
-    private String montoLibranza;
-    private String plazoLibranza;
-    private String fechaNacimientoLibranza;
 
     @Before
     public void configurarActor() {
+        // Descargamos el chromedriver que corresponde a la version de Chrome de esta
+        // maquina y dejamos lista su ruta antes de abrir el navegador. Asi el proyecto
+        // funciona en cualquier equipo sin tener que instalar el driver manualmente.
+        WebDriverManager.chromedriver().setup();
+
         usuarioBancolombia = Actor.named("Usuario Bancolombia")
                 .can(BrowseTheWeb.with(navegador));
     }
@@ -54,7 +52,7 @@ public class SimuladoresCreditoSteps {
         );
     }
 
-    // --- Pasos para Libre Inversion ---
+    // --- Libre Inversion ---
 
     @Cuando("el usuario navega al simulador de libre inversion")
     public void navegarSimuladorLibreInversion() {
@@ -63,20 +61,9 @@ public class SimuladoresCreditoSteps {
         );
     }
 
-    @Cuando("acepta continuar con la simulacion de libre inversion")
-    public void aceptarContinuarLibreInversion() {
-        // El click en continuar y la seleccion del Si se delegan a la tarea principal.
-        // Este paso existe para que el feature sea legible como lenguaje de negocio.
-    }
-
-    @Cuando("selecciona que si sabe el monto que necesita")
-    public void seleccionarSiMontoLibreInversion() {
-        // La interaccion con el radio button ocurre dentro de la tarea SimularCreditoLibreInversion.
-    }
-
-    @Cuando("ingresa un monto de {string} y un plazo de {string} meses para libre inversion")
-    public void ingresarDatosLibreInversion(String monto, String plazo) {
-        DatosSimulacion datos = new DatosSimulacion(monto, plazo);
+    @Cuando("simula un credito de libre inversion con un monto de {string}, un plazo de {string} meses y fecha de nacimiento {string}")
+    public void simularLibreInversion(String monto, String plazo, String fechaNacimiento) {
+        DatosSimulacion datos = new DatosSimulacion(monto, plazo, fechaNacimiento);
         usuarioBancolombia.attemptsTo(
             SimularCreditoLibreInversion.con(datos)
         );
@@ -89,7 +76,7 @@ public class SimuladoresCreditoSteps {
         );
     }
 
-    // --- Pasos para Libranza ---
+    // --- Libranza ---
 
     @Cuando("el usuario navega al simulador de libranza")
     public void navegarSimuladorLibranza() {
@@ -98,24 +85,9 @@ public class SimuladoresCreditoSteps {
         );
     }
 
-    @Cuando("ingresa un monto de {string} y un plazo de {string} meses para libranza")
-    public void ingresarMontoPlazoPorLibranza(String monto, String plazo) {
-        // Guardamos monto y plazo para reunirlos con la fecha de nacimiento.
-        // El simulador de libranza necesita los tres datos juntos al momento de simular.
-        this.montoLibranza = monto;
-        this.plazoLibranza = plazo;
-    }
-
-    @Cuando("ingresa la fecha de nacimiento {string} para libranza")
-    public void ingresarFechaNacimientoLibranza(String fechaNacimiento) {
-        // Completamos el ultimo dato que el banco exige para calcular el seguro de vida.
-        this.fechaNacimientoLibranza = fechaNacimiento;
-    }
-
-    @Cuando("hace clic en simular para libranza")
-    public void simularLibranza() {
-        // Con todos los datos reunidos construimos el modelo y disparamos la simulacion.
-        DatosSimulacion datos = new DatosSimulacion(montoLibranza, plazoLibranza, fechaNacimientoLibranza);
+    @Cuando("simula un credito de libranza con un monto de {string}, un plazo de {string} meses y fecha de nacimiento {string}")
+    public void simularLibranza(String monto, String plazo, String fechaNacimiento) {
+        DatosSimulacion datos = new DatosSimulacion(monto, plazo, fechaNacimiento);
         usuarioBancolombia.attemptsTo(
             SimularCreditoLibranza.con(datos)
         );
@@ -128,7 +100,7 @@ public class SimuladoresCreditoSteps {
         );
     }
 
-    // --- Pasos para Crediagil ---
+    // --- Crediagil ---
 
     @Cuando("el usuario navega al simulador de Crediagil")
     public void navegarSimuladorCrediagil() {
@@ -137,19 +109,10 @@ public class SimuladoresCreditoSteps {
         );
     }
 
-    @Cuando("acepta continuar con la simulacion de Crediagil")
-    public void aceptarContinuarCrediagil() {
-        // Delega al flujo interno de la tarea SimularCreditoCrediAgil.
-    }
-
-    @Cuando("selecciona que si sabe el monto que necesita en Crediagil")
-    public void seleccionarSiMontoCrediagil() {
-        // Delega al flujo interno de la tarea SimularCreditoCrediAgil.
-    }
-
-    @Cuando("ingresa un monto de {string} y un plazo de {string} meses para Crediagil")
-    public void ingresarDatosCrediagil(String monto, String plazo) {
-        DatosSimulacion datos = new DatosSimulacion(monto, plazo);
+    @Cuando("simula un cupo Crediagil con un monto de {string} y fecha de nacimiento {string}")
+    public void simularCrediagil(String monto, String fechaNacimiento) {
+        // Crediagil no maneja plazo por ser un cupo rotativo, por eso el plazo va vacio.
+        DatosSimulacion datos = new DatosSimulacion(monto, "", fechaNacimiento);
         usuarioBancolombia.attemptsTo(
             SimularCreditoCrediAgil.con(datos)
         );

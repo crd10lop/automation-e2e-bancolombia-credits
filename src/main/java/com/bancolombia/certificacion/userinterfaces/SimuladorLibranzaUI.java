@@ -3,33 +3,34 @@ package com.bancolombia.certificacion.userinterfaces;
 import net.serenitybdd.screenplay.targets.Target;
 import org.openqa.selenium.By;
 
-// Mapea los elementos del simulador de Libranza Bancolombia.
-// Este simulador difiere del de libre inversion porque muestra directamente
-// los campos sin pantalla de bienvenida ni pregunta previa de monto.
-// Adicionalmente requiere la fecha de nacimiento del solicitante.
+// Mapea los elementos reales del simulador de Libranza Bancolombia.
+// A diferencia de los otros simuladores, este no tiene pantalla de bienvenida:
+// muestra de una vez el formulario con monto, plazo (en meses) y fecha de nacimiento.
+// La libranza descuenta la cuota directamente del salario, por eso pide la fecha
+// para validar la edad y calcular el seguro de vida obligatorio.
 public class SimuladorLibranzaUI {
 
-    // Campo para ingresar el monto del credito de libranza.
-    // El banco descuenta la cuota directamente del salario del empleado.
+    // Campo donde el empleado escribe el valor del credito que necesita.
     public static final Target CAMPO_MONTO = Target.the("campo monto libranza")
-            .located(By.cssSelector("input[id*='monto'], input[formcontrolname='monto'], bc-input input[placeholder='0']"));
+            .located(By.id("totalAmount"));
 
-    // Campo para ingresar el numero de meses del credito de libranza.
-    // El rango permitido va de 72 a 96 meses segun las condiciones del producto.
+    // Campo de texto para el numero de meses del credito de libranza.
+    // El banco permite plazos largos (hasta 96 meses) por el menor riesgo de la nomina.
     public static final Target CAMPO_PLAZO = Target.the("campo plazo libranza")
-            .located(By.cssSelector("input[id*='plazo'], input[formcontrolname='plazo'], bc-input input[placeholder*='mes']"));
+            .located(By.id("month"));
 
-    // Campo de fecha de nacimiento requerido para validar la edad del solicitante.
-    // El banco acepta unicamente solicitantes entre 18 y 70 anos.
-    public static final Target CAMPO_FECHA_NACIMIENTO = Target.the("campo fecha nacimiento libranza")
-            .located(By.cssSelector("input[id*='fecha'], input[formcontrolname*='fecha'], bc-datepicker input"));
+    // Campo de fecha de nacimiento que se diligencia con el calendario del banco.
+    // Se expone como localizador directo porque el calendario requiere el clic
+    // nativo del navegador sobre el elemento para desplegarse.
+    public static final By CAMPO_FECHA_NACIMIENTO = By.id("birthDate");
 
-    // Boton que ejecuta el calculo de la cuota estimada del credito de libranza.
+    // Boton Simular del formulario. No tiene id propio, por eso se ubica por su texto.
+    // Comienza deshabilitado y se habilita cuando los tres campos son validos.
     public static final Target BOTON_SIMULAR = Target.the("boton simular libranza")
-            .located(By.cssSelector("button[class*='bc-button-primary']"));
+            .located(By.xpath("//button[contains(@class,'bc-button-primary')][normalize-space()='Simular']"));
 
-    // Contenedor donde se muestra la cuota mensual calculada para el credito de libranza.
-    // Su presencia en el DOM confirma que el simulador proceso exitosamente los datos.
+    // Tarjeta donde el banco muestra la cuota aproximada del credito de libranza.
+    // Su visibilidad confirma que el simulador proceso los datos ingresados.
     public static final Target RESULTADO_SIMULACION = Target.the("resultado simulacion libranza")
-            .located(By.cssSelector("bc-card-result, div[class*='cuota'], span[class*='cuota'], p[class*='result']"));
+            .located(By.cssSelector(".cbc-pay, .cbc-part-card"));
 }
